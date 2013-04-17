@@ -1,0 +1,24 @@
+Data Name	Min	Max	Start Byte	Start Bit	Bit Length	Unit	Decoding Equation
+Format ID	0	255	1	8	8	n/a	x
+Year	2000	2127	2	8	7	n/a	x+2000
+Month	0	15	2	1	4	n/a	x
+Day	0	63	3	5	6	n/a	x
+Hour	0	31	4	7	5	n/a	x
+Minute	0	63	4	2	6	n/a	x
+Barometric Pressure	850	1054.7	5	4	11	hPa	0.1*x+850
+Sea Surface Temperature	-60	42.3	6	1	10	C	0.1*x-60
+Pressure Tendency	-25.5	25.6	8	7	9	hPA	0.1*x-25.5
+Air Temperature	-60	42.3	9	6	10	C	0.1*x-60
+Battery Voltage	5	17.6	10	4	6	V	0.2*x+5
+SBD Time	0	255	11	6	8	sec	x
+SPARE1	0	255	12	6	8	n/a	x
+Time Since Last Fix	0	4095	13	6	12	n/a	x
+GPS Latitude	-90	119.715	14	2	20	deg	0.0002*x-90
+GPS Longitude	-180	239.4302	17	6	21	deg	0.0002*x-180
+TTFF	0	254	19	1	7	n/a	2*x
+SPARE2	0	15	20	2	4	n/a	x
+SPARE3	0	63	21	6	6	sec	x
+Sonic Snow Height 1	-80	175	22	8	8	cm	x-80
+Sonic Snow Height 2	-80	175	23	8	8	cm	x-80
+Sonic Snow Height 3	-80	175	24	8	8	cm	x-80
+Sonic Snow Height 4	-80	175	25	8	8	cm	x-80
