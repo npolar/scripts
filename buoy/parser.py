@@ -1,4 +1,5 @@
 import csv
+import json
 import sys
 from pprint import pprint
 from bitstring import BitArray
@@ -16,6 +17,7 @@ def read_format(path):
   return format
 
 def parse_binary(format, path):
+  doc = {}
   with open(path, 'rb') as fd:
     array = BitArray(fd)
 
@@ -23,8 +25,11 @@ def parse_binary(format, path):
       offset = (row['Start Byte'] - 1) * 8 + (8 - row['Start Bit']) # perfectly logical, metocean
       x = array[offset:offset+row['Bit Length']].uint
       y = eval(row['Decoding Equation'])
+      doc[row['Data Name']] = y
       #print "%s ==> %s" % (x, y,)
-      print "%s\t%s Min=%s, Max=%s" % (row['Data Name'], y, row['Min'], row['Max'],)
+      #print "%s\t%s Min=%s, Max=%s" % (row['Data Name'], y, row['Min'], row['Max'],)
+
+  print json.dumps(doc)
 
 format = read_format(sys.argv[1])
 parse_binary(format, sys.argv[2])
