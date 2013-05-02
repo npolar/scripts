@@ -5,7 +5,7 @@ processing scripts
 
 buoy processing
 ===============
-usage: parser.py <format file>  <data file>
+usage: parser.py format_file  data_file
 
 e.g.
 
