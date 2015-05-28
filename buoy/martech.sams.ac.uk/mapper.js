@@ -27,5 +27,9 @@ functions = {
 
     }
     return data;
+  },
+  "fixDates": function (data) {
+    data.measured = data.measured.replace(" ", "T")+"Z";
+    return data;
   }
 };

@@ -30,6 +30,10 @@ swap = function (json) {
   return ret;
 };
 
+wash = function (str) {
+  return Number(str.replace(/[^1-9 ]/g, "").replace(" ", "."));
+};
+
 functions = {
   /*
   Filename include IMEI number or buoy name.
@@ -41,6 +45,11 @@ functions = {
     } else if (data.title) {
       data.IMEI = swap(map)[data.title];
     }
+    return data;
+  },
+  "washLatLng": function (data) {
+    data.latitude = wash(data.latitude);
+    data.longitude = wash(data.longitude);
     return data;
   },
   "fixDates": function (data) {
