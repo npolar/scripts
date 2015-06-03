@@ -6,27 +6,28 @@
 # The ids are generated on the same set of keys each run and couchdb will reject
 # documents with ids thats allready in the database.
 #
-INCLUDE='GPSDateTime,GPSLat,GPSLng,title,links,collection'
+INCLUDE='GPSDateTime,GPSLat,GPSLng,title,links,collection,IMEI'
 KEYMAP='{"GPSDateTime": "measured", "GPSLat": "latitude", "GPSLng": "longitude"}'
 UUIDKEYS='measured,latitude,longitude'
-NAMEPATTERN='{"pattern":".*/(.*_\\d{2}).*","output":{"links": [
-  {"title": "Temperature data", "href": "http://api.npolar.no/buoy/td?filter-buoy=%1"},
-  {"title": "Status data", "href": "http://api.npolar.no/buoy/st?filter-buoy=%1"}],
-  "title": "%1"}}'
-MERGE='{"collection": "buoy", "schema": "http://api.npolar.no/schema/oceanography_point-1.0.0"}'
+NAMEPATTERN='{"pattern":".*/(.*_\\d{2}).*","output":{"title": "%1"}}'
+MERGE_COMMON='"collection": "buoy", "schema": "http://api.npolar.no/schema/oceanography_point-1.0.1"'
 JS='mapper.js'
-OUT="" #"-o /home/anders/tmp/martech.sams.ac.uk/"
+OUT="-a $NPOLAR_API_COUCHDB/oceanography_buoy" #"-o /home/anders/tmp/martech.sams.ac.uk/"
 LEVEL="" #"--quiet"
-SCHEMA="http://api.npolar.no/schema/oceanography_point-1.0.0"
+SCHEMA="http://api.npolar.no/schema/oceanography_point-1.0.1"
 
 # FMI
 HEADER='/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/fmi/headers/gps.txt'
+LINKS='"links": [{"title": "Data", "rel": "data", "href": "http://data.npolar.no/raw/buoy/martech.sams.ac.uk/fmi/"},{"title": "Deployment logs", "rel": "log", "href": "http://data.npolar.no/raw/buoy/deployment-logs/"}]'
+MERGE="{$MERGE_COMMON, $LINKS}"
 DATA=(/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/fmi/FMI_{13,14,19,20}_gps.txt)
 
 ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-keys "$UUIDKEYS" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" $LEVEL $OUT csv --header $HEADER ${DATA[@]} #&
 
 # NPOL
 HEADER='/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/npol/headers/gps.txt'
+LINKS='"links": [{"title": "Data", "rel": "data", "href": "http://data.npolar.no/raw/buoy/martech.sams.ac.uk/npol/"},{"title": "Deployment logs", "rel": "log", "href": "http://data.npolar.no/raw/buoy/deployment-logs/"}]'
+MERGE="{$MERGE_COMMON, $LINKS}"
 DATA=(/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/npol/NPOL_{01,03,04,05}_gps.txt)
 
 ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-keys "$UUIDKEYS" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" $LEVEL $OUT csv --header $HEADER ${DATA[@]} #&

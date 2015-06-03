@@ -31,7 +31,8 @@ swap = function (json) {
 };
 
 wash = function (str) {
-  return Number(str.replace(/[^1-9 ]/g, "").replace(" ", "."));
+  var parts = str.replace(/[^0-9 \.]/g, "").split(" ");
+  return Number(parts[0]) + Number(parts[1])/60;
 };
 
 functions = {
