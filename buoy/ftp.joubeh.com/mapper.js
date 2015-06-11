@@ -270,6 +270,7 @@ var functions = {
       doc.title = extra.name;
       doc.IMEI = doc.IMEI || extra.IMEI;
     }
+    doc.id = doc._id;
     return doc;
   }
 };
