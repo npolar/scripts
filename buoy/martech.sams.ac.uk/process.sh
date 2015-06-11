@@ -22,9 +22,9 @@ SCHEMA="http://api.npolar.no/schema/oceanography_point-1.0.1"
 HEADER='/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/fmi/headers/gps.txt'
 LINKS='"links": [{"title": "Data", "rel": "data", "href": "http://data.npolar.no/raw/buoy/martech.sams.ac.uk/fmi/"},{"title": "Deployment logs", "rel": "log", "href": "http://data.npolar.no/raw/buoy/deployment-logs/"}]'
 MERGE="{$MERGE_COMMON, $LINKS}"
-DATA=(/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/fmi/FMI_{13,14,19,20}_gps.txt)
+DATA=(/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/fmi/FMI_{14,19,20}_gps.txt)
 
-ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-keys "$UUIDKEYS" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv --header $HEADER ${DATA[@]} &
+ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-keys "$UUIDKEYS" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv --header $HEADER ${DATA[@]}
 
 # NPOL
 HEADER='/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/npol/headers/gps.txt'
@@ -32,4 +32,4 @@ LINKS='"links": [{"title": "Data", "rel": "data", "href": "http://data.npolar.no
 MERGE="{$MERGE_COMMON, $LINKS}"
 DATA=(/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/npol/NPOL_{01,03,04,05}_gps.txt)
 
-ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-keys "$UUIDKEYS" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv --header $HEADER ${DATA[@]} &
+ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-keys "$UUIDKEYS" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv --header $HEADER ${DATA[@]}

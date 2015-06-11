@@ -11,9 +11,6 @@ functions = {
       case "NPOL_05":
         data.IMEI = "300234061762880";
         break;
-      case "FMI_13":
-        data.IMEI = "300234060690060";
-        break;
       case "FMI_14":
         data.IMEI = "300234060695050";
         break;

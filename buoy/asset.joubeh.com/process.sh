@@ -15,4 +15,4 @@ SCHEMA='http://api.npolar.no/schema/oceanography_point-1.0.1'
 
 DATA=(/mnt/datasets/oceanography/buoy/asset.joubeh.com/**/*.csv)
 
-ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-keys "$UUIDKEYS" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" $LEVEL $OUT csv ${DATA[@]} #&
+ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-keys "$UUIDKEYS" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" $LEVEL $OUT csv ${DATA[@]}
