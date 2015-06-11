@@ -5,7 +5,8 @@
 # regardless if the data is allready in the database.
 # The ids are generated on the same set of keys each run and couchdb will reject
 # documents with ids thats allready in the database.
-#
+
+source ~/.bash_profile
 INCLUDE='GPSDateTime,GPSLat,GPSLng,title,links,collection,IMEI'
 KEYMAP='{"GPSDateTime": "measured", "GPSLat": "latitude", "GPSLng": "longitude"}'
 UUIDKEYS='measured,latitude,longitude'

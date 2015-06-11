@@ -4,6 +4,8 @@
 # The ids are generated on the same set of keys each run and couchdb will reject
 # documents with ids thats allready in the database.
 #
+
+source ~/.bash_profile
 INCLUDE='Data Date(GMT),LATITUDE,LONGITUDE,SST,BP,BPT,title,links,collection,IMEI'
 KEYMAP='{"Data Date(GMT)": "measured", "LATITUDE": "latitude", "LONGITUDE": "longitude", "SST": "sea_surface_temperature", "BP": "air_pressure", "BPT": "air_pressure_tendency"}'
 UUIDKEYS='measured,latitude,longitude'
