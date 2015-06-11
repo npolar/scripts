@@ -195,7 +195,7 @@ var extras = {
 var getExtra = function (doc) {
   var extra;
   if (doc.IMEI) {
-    extra = getExtra(doc.IMEI);
+    extra = extras[doc.IMEI];
   } else if (doc.title) {
     extra = swap(extras)[doc.title];
   }
