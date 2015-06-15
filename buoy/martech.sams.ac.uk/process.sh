@@ -6,17 +6,18 @@
 # The ids are generated on the same set of keys each run and couchdb will reject
 # documents with ids thats allready in the database.
 
-source ~/.bash_profile
+export PATH=$PATH:$HOME/bin
+DIRNAME="$(dirname $(readlink -f $0))"
 INCLUDE='GPSDateTime,GPSLat,GPSLng,title,links,collection,IMEI'
 KEYMAP='{"GPSDateTime": "measured", "GPSLat": "latitude", "GPSLng": "longitude"}'
 UUIDINCLUDE='measured,latitude,longitude'
 NAMEPATTERN='{"pattern":".*/(.*_\\d{2}).*","output":{"title": "%1"}}'
 MERGE_COMMON='"collection": "buoy", "schema": "http://api.npolar.no/schema/oceanography_point-1.0.1"'
-JS='mapper.js'
+JS="$DIRNAME/mapper.js"
 OUT="-a $NPOLAR_API_COUCHDB/oceanography_buoy" #"-o /home/anders/tmp/martech.sams.ac.uk/"
 LEVEL="INFO"
 MAIL="balter@npolar.no"
-LOGFILE="/home/external/logs/ghostdoc-sams.log"
+LOGFILE="$HOME/logs/ghostdoc-sams.log"
 SCHEMA="http://api.npolar.no/schema/oceanography_point-1.0.1"
 
 # FMI

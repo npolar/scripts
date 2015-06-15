@@ -5,17 +5,18 @@
 # documents with ids thats allready in the database.
 #
 
-source ~/.bash_profile
+export PATH=$PATH:$HOME/bin
+DIRNAME="$(dirname $(readlink -f $0))"
 INCLUDE='Data Date(GMT),LATITUDE,LONGITUDE,SST,BP,BPT,title,links,collection,IMEI'
 KEYMAP='{"Data Date(GMT)": "measured", "LATITUDE": "latitude", "LONGITUDE": "longitude", "SST": "sea_surface_temperature", "BP": "air_pressure", "BPT": "air_pressure_tendency"}'
 UUIDINCLUDE='measured,latitude,longitude'
 NAMEPATTERN='{"pattern":".*/(\\d{15}).*","output":{"IMEI": "%1"}}'
 MERGE='{"collection": "buoy", "schema": "http://api.npolar.no/schema/oceanography_point-1.0.1", "links": [{"title": "Deployment logs", "rel": "log", "href": "http://data.npolar.no/raw/buoy/deployment-logs/"}]}'
-JS='mapper.js'
+JS="$DIRNAME/mapper.js"
 OUT="-a $NPOLAR_API_COUCHDB/oceanography_buoy" #"-o /home/anders/tmp/data.joubeh.com/"
 LEVEL="INFO"
 MAIL="balter@npolar.no"
-LOGFILE="/home/external/logs/ghostdoc-joubeh.log"
+LOGFILE="$HOME/logs/ghostdoc-joubeh.log"
 SCHEMA="http://api.npolar.no/schema/oceanography_point-1.0.1"
 
 TODAY=`date +%F`
