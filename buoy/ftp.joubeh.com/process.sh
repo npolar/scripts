@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 
 # Joubeh csv is one directory per day. This parser will always parse today and yesterday.
 # The ids are generated on the same set of keys each run and couchdb will reject

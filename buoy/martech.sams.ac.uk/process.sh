@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 
 # martech.sams.ac.uk use one text file per buoy which they append data to.
 # This parser will parse and post all data from each file on each run,
