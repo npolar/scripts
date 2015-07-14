@@ -24,4 +24,4 @@ YESTERDAY=`date +%F --date='yesterday'`
 
 DATA=(/mnt/datasets/oceanography/buoy/ftp.joubeh.com/*/{$YESTERDAY,$TODAY}/{300234062442640,300234062447650,300234062726310,300234062317630,300234062722280,300234061371430,300234061369140,300234062311650,300234062426150,300234062426060,300234011090780,300234010080470,300234010084440,300234011091510}*.csv)
 
-ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-include "$UUIDINCLUDE" --uuid-key _id --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv ${DATA[@]}
+ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-include "$UUIDINCLUDE" --uuid-key _id --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv "${DATA[@]}"

@@ -26,7 +26,7 @@ LINKS='"links": [{"title": "Deployment logs", "rel": "log", "href": "http://data
 MERGE="{$MERGE_COMMON, $LINKS}"
 DATA=(/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/fmi/FMI_{14,19,20}_gps.txt)
 
-ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-include "$UUIDINCLUDE" --uuid-key "_id" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv --header $HEADER ${DATA[@]}
+ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-include "$UUIDINCLUDE" --uuid-key "_id" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv --header "$HEADER" "${DATA[@]}"
 
 # NPOL
 HEADER='/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/npol/headers/gps.txt'
@@ -34,4 +34,4 @@ LINKS='"links": [{"title": "Deployment logs", "rel": "log", "href": "http://data
 MERGE="{$MERGE_COMMON, $LINKS}"
 DATA=(/mnt/datasets/oceanography/buoy/martech.sams.ac.uk/npol/NPOL_{01,03,04,05}_gps.txt)
 
-ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-include "$UUIDINCLUDE" --uuid-key "_id" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv --header $HEADER ${DATA[@]}
+ghostdoc --include "$INCLUDE" --key-map "$KEYMAP" --uuid-include "$UUIDINCLUDE" --uuid-key "_id" --name-pattern "$NAMEPATTERN" --merge "$MERGE" --js "$JS" --schema "$SCHEMA" --log-level "$LEVEL" --log-mail "$MAIL" --log-file "$LOGFILE" $OUT csv --header "$HEADER" "${DATA[@]}"
