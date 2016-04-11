@@ -25,32 +25,39 @@ actions = [
 	}
 ]
 
-dirs = []
+dirs     = []
+repos    = []
 dirWidth = 0
 msgWidth = 0
-ignore = []
+ignore   = []
 
-for arg in sys.argv:
+for arg in sys.argv[1:]:
 	if arg[:5] == "--no-":
 		ignore.append(arg[5:])
+	else:
+		dirs.append(arg)
 
-for entry in os.listdir("."):
+if 0 == len(dirs):
+	for entry in os.listdir("."):
+		dirs.append(entry)
+
+for entry in dirs:
 	if os.path.islink(entry):
 		entry = os.readlink(entry)
 
 	entry = os.path.abspath(entry)
 
 	if os.path.isdir(entry):
-		if entry not in dirs:
+		if entry not in repos:
 			dirWidth = max(dirWidth, len(os.path.basename(entry)))
-			dirs.append(entry)
+			repos.append(entry)
 
 for action in actions:
 	msgWidth = max(msgWidth, len(action["message"]))
 
 countWidth = len(str(len(dirs)))
 
-for index, entry in enumerate(dirs):
+for index, entry in enumerate(repos):
 	success = True
 	header = "[{1:{0}}/{2:{0}}] {3} ".format(countWidth, index + 1, len(dirs), (os.path.basename(entry) + ":").ljust(1 + dirWidth))
 

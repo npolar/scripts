@@ -8,7 +8,7 @@ This script expects to be run from a directory containing separate npdc director
 
 Usage:
 ```sh
-$ ./update.py [option...]
+$ ./update.py [option...] [repository...]
 ```
 
 Option    | Description
