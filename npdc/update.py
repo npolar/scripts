@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from subprocess import call, PIPE
+from subprocess import Popen, PIPE
 import os
 import string
 import sys
@@ -37,7 +37,7 @@ for arg in sys.argv[1:]:
 	else:
 		dirs.append(arg)
 
-if 0 == len(dirs):
+if not len(dirs):
 	for entry in os.listdir("."):
 		dirs.append(entry)
 
@@ -61,16 +61,21 @@ for index, entry in enumerate(repos):
 	success = True
 	header = "[{1:{0}}/{2:{0}}] {3} ".format(countWidth, index + 1, len(dirs), (os.path.basename(entry) + ":").ljust(1 + dirWidth))
 
+	os.chdir(entry)
+
 	for action in actions:
 		if action["command"][0] in ignore:
 			continue
 
 		print("\r{0}{1}".format(header, (action["message"] + "...").ljust(3 + msgWidth)), end="")
 		sys.stdout.flush()
-		os.chdir(entry)
 
 		try:
-			if call(action["command"], stdout=PIPE, stderr=PIPE) != 0:
+			ps = Popen(action["command"], stdout=PIPE, stderr=PIPE)
+			(out, err) = ps.communicate()
+			ret = ps.wait()
+
+			if ret:
 				raise
 		except (KeyboardInterrupt, SystemExit):
 			sys.exit("\n")
