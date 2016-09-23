@@ -189,6 +189,15 @@ var extras = {
     "old name": "N-ICE_AFAR3",
     "owner": "NPI",
     "type": "MetOcean radiation buoy"
+  },
+  "300025010632870": {
+    "deployment date": "2016-09-02T17:00:00Z",
+    "deployment lat": 79.3218,
+    "deployment lon": -13.9036,
+    "name": "IMB_2016a",
+    "old name": "60143  IMB-I ",
+    "owner": "NPI",
+    "type": "MetOcean IMB"
   }
 };
 
