@@ -84,7 +84,7 @@ module Couch
                  :_id => uuid,
                  :instrument_id => 'instrument_id',
                  :interval => '10 min',
-                 :timestamp => row[0], #trenger iso8601
+                 :timestamp => row[0][0..9] + 'T' + row[0][11..18] + 'Z', #trenger iso8601
                  :record => row[1],
                  :sw_in_wpm2_avg => row[2],
                  :lw_in_corr_wpm2_avg => row[3],
@@ -194,7 +194,7 @@ module Couch
                  :_id => uuid,
                  :instrument_id => 'instrument_id',
                  :interval => '10 min',
-                 :timestamp => row3[0], #trenger iso8601
+                 :timestamp => row3[0][0..9] + 'T' + row3[0][11..18] + 'Z', #trenger iso8601
                  :record => row3[1],
                  :battv => row3[2],
                  :ptemp_c => row3[3],
