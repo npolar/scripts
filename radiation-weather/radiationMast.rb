@@ -174,8 +174,8 @@ module Couch
 
 
 
-    #Post coursetype
-   # doc = @colony_obj.to_json
+    #Post entry
+   # doc = @entry.to_json
 
    # res2 = server.post("/"+ Couch::Config::COUCH_SEABIRD + "/", doc, user, password)
     end #CSV
@@ -224,8 +224,10 @@ module Couch
           #remove nil values
           @entry2.reject! {|k,v| v.nil?}
 
-          #Skip if empty!!
-          puts @entry2
+          #Post entry
+          # doc = @entry.to_json
+
+          # res2 = server.post("/"+ Couch::Config::COUCH_SEABIRD + "/", doc, user, password)
      end
    end
     end
