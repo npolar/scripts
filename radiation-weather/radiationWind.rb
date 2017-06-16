@@ -20,7 +20,7 @@ require 'simple-spreadsheet'
 
 module Couch
 
-  class ExcelStationBooking
+  class RadiationWind
 
     #Get hold of UUID for database storage
     def self.getUUID(server)
@@ -46,9 +46,6 @@ module Couch
     user = Couch::Config::USER1
     password = Couch::Config::PASSWORD1
 
-
-    COUCH_DB_NAME = "radiation-weather"
-
     title = ""
 
     # do work on files ending in .xls in the desired directory
@@ -71,8 +68,8 @@ module Couch
      server = Couch::Server.new(host, port)
 
      #Count down the lines
-    # while (line < ((s.last_row).to_i + 2))
-     while (line < 9)
+     while (line < ((s.last_row).to_i + 2))
+    # while (line < 9)
 
           #Get uuid
           uuid = getUUID(server)
@@ -86,35 +83,34 @@ module Couch
                  :collection => 'radiation-weather',
                  :id => uuid,
                  :_id => uuid,
-                 :instrument_id => 'instrument_id',
-                 :interval => '1 hour',
+                 :instrument_station => 'AWS KNG-6',
+                 :interval => '3600',
                  :timestamp => timestamp.to_s[0..18] + 'Z', #trenger iso8601
                  :record => line,
-                 :temp => s.cell(line, 2, 1),
-                 :rh => s.cell(line, 3, 1),
-                 :wind_min => s.cell(line, 4, 1),
-                 :wind_max => s.cell(line, 5, 1),
-                 :wind_mean => s.cell(line, 6, 1),
-                 :wind_dir => s.cell(line, 7, 1),
-                 :sw_in => s.cell(line, 8, 1),
-                 :sw_out => s.cell(line, 9, 1),
-                 :lw_out => s.cell(line, 10, 1),
-                 :lw_in_ => s.cell(line, 11, 1)
-            }
+                 :at_2_avg => (s.cell(line, 2, 1)).round(1),
+                 :rh_2_avg => (s.cell(line, 3, 1)).round(1),
+                 :ws_2_min => unless (s.cell(line, 4, 1) == 'NaN') then  (s.cell(line, 4, 1)).round(1) end ,
+                 :gust_2_max => unless (s.cell(line, 5, 1) == 'NaN') then  (s.cell(line, 5, 1)).round(1) end ,
+                 :ws_2_wvc1 => unless (s.cell(line, 6, 1) == 'NaN') then (s.cell(line, 6, 1)).round(1) end,
+                 :ws_2_wvc2 => unless (s.cell(line, 7, 1) == 'NaN') then (s.cell(line, 7, 1)).round(1) end,
+                 :sw_in_wpm2_avg => (s.cell(line, 8, 1)).round(1),
+                 :sw_out_wpm2_avg => (s.cell(line, 9, 1)).round(1),
+                 :lw_in_corr_wpm2_avg => (s.cell(line, 10, 1)).round(1),
+                 :lw_out_corr_wpm2_avg => (s.cell(line, 11, 1)).round(1)
+          }
 
-            #remove nil values
-            @entry.reject! {|k,v| v.nil?}
+          #remove nil values
+          @entry.reject! {|k,v| v.nil?}
 
+          #Post @entry
+          doc = @entry.to_json
 
-            #Post @entry
-            doc = @entry.to_json
+          #puts doc
 
-            puts doc
+          res2 = server.post("/radiation-weather/", doc, user, password)
 
-            # res2 = server.post("/"+ Couch::Config::COUCH_SEABIRD + "/", doc, user, password)
-
-            #Next line
-            line = line+1
+          #Next line
+          line = line+1
 
   end #while
 end #excel_file
