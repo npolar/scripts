@@ -20,7 +20,7 @@ require 'simple-spreadsheet'
 
 module Couch
 
-  class RadiationWind
+  class ExcelStationBooking
 
     #Get hold of UUID for database storage
     def self.getUUID(server)
@@ -46,6 +46,9 @@ module Couch
     user = Couch::Config::USER1
     password = Couch::Config::PASSWORD1
 
+
+    COUCH_DB_NAME = "radiation-weather"
+
     title = ""
 
     # do work on files ending in .xls in the desired directory
@@ -59,7 +62,7 @@ module Couch
      s.selected_sheet = s.sheets.first
 
      #Start down the form -after
-     line = 3
+     line = 3 #37075
      last = (s.last_row).to_i
 
      people = Array.new
@@ -68,7 +71,7 @@ module Couch
      server = Couch::Server.new(host, port)
 
      #Count down the lines
-     while (line < ((s.last_row).to_i + 2))
+     while (line < ((s.last_row).to_i + 1))
     # while (line < 9)
 
           #Get uuid

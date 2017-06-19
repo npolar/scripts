@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# Convert from colony Access database to the new couchdb database
+# Convert from 10min radiationWeather data into the Radiation-weather database
 #
 # Author: srldl
 #
@@ -11,7 +11,6 @@ require 'net/http'
 require 'net/ssh'
 require 'net/scp'
 require 'csv'
-#require 'dir'
 require 'time'
 require 'date'
 require 'json'
@@ -59,15 +58,15 @@ module Couch
 
     @entry = Hash.new
 
- #   Dir.foreach("./data") {|x|
- #     unless (x =~ /^\.\.?$/) #Drop . and .. dirs
+    Dir.foreach("./data") {|x|
+      unless (x =~ /^\.\.?$/) #Drop . and .. dirs
 
        #arr_mast holds all record values that exists in both files
        @arr_mast = []
 
         #There are two files Mast and Straaling
-      # CSV.foreach("./data/#{x}/1441_Npolar_Mast10min.dat") do |row|
-       CSV.foreach("./data/20170506_1/1441_Npolar_Straaling10min.dat") do |row|
+       CSV.foreach("./data/#{x}/1441_Npolar_Mast10min.dat") do |row|
+      # CSV.foreach("./data/20170506_1/1441_Npolar_Straaling10min.dat") do |row|
             #Get uuid
             uuid = getUUID(server)
 
@@ -83,7 +82,7 @@ module Couch
                  :id => uuid,
                  :_id => uuid,
                  :instrument_id => 'instrument_id',
-                 :interval => '10 min',
+                 :interval => '600',
                  :timestamp => row[0][0..9] + 'T' + row[0][11..18] + 'Z', #trenger iso8601
                  :record => row[1],
                  :sw_in_wpm2_avg => row[2],
@@ -133,10 +132,9 @@ module Couch
 
        #if row2[1] is equal to
 
-       if (row[0].match(/^20/) && row[1] === row2[1])
 
-             #Add record existing in both files to the mast array
-             @arr_mast.push(row2[1])
+
+       if (row[0].match(/^20/) && row[1] === row2[1])
 
              @entry[:battv] = row2[2]
              @entry[:ptemp_c] = row2[3]
@@ -156,8 +154,8 @@ module Couch
              @entry[:ws_4_wvc1]  = row2[17]
              @entry[:ws_4_wvc2] = row2[18]
              @entry[:ws_10_wvc1] = row2[19]
-             @entry[:ws_10_wvc2] = row2[20]
-             @entry[:gust_2_max] = row2[21]
+             @entry[:ws_10_wvc2] =  row2[20]
+             @entry[:gust_2_max] =  row2[21]
              @entry[:gust_4_max]  = row2[22]
              @entry[:gust_10_max] = row2[23]
              @entry[:tcdt] = row2[24]
@@ -169,73 +167,20 @@ module Couch
     @entry.reject! {|k,v| v.nil?}
 
     #Skip if empty!!
-    puts @entry
-    puts @arr_mast
+    puts @entry[:record]
+    puts @entry[:timestamp]
 
 
 
     #Post entry
-   # doc = @entry.to_json
+    doc = @entry.to_json
 
-   # res2 = server.post("/"+ Couch::Config::COUCH_SEABIRD + "/", doc, user, password)
+    res2 = server.post("/weather-radiation/", doc, user, password)
+
     end #CSV
 
-     #Go through mast array and print entries unique to the Mast file
-    CSV.foreach("./data/20170506_1/1441_Npolar_Mast10min.dat") do |row3|
-     if row3[0].match(/^20/)
-     unless   @arr_mast.include?(row3[1])
-          #Get uuid
-          uuid = getUUID(server)
-
-          @entry2 = {
-                 :schema => 'http://api.npolar.no/schema/radiation-weather',
-                 :collection => 'radiation-weather',
-                 :id => uuid,
-                 :_id => uuid,
-                 :instrument_id => 'instrument_id',
-                 :interval => '10 min',
-                 :timestamp => row3[0][0..9] + 'T' + row3[0][11..18] + 'Z', #trenger iso8601
-                 :record => row3[1],
-                 :battv => row3[2],
-                 :ptemp_c => row3[3],
-                 :battbankv_avg => row3[4],
-                 :at_2_avg => row3[5],
-                 :at_4_avg => row3[6],
-                 :at_10_avg => row3[7],
-                 :apogeefan_avg1 => row3[8],
-                 :apogeefan_avg2 => row3[9],
-                 :apogeefan_avg3 => row3[10],
-                 :rh_2_avg => row3[11],
-                 :rh_4_avg => row3[12],
-                 :rh_10_avg => row3[13],
-                 :p_sfc_avg => row3[14],
-                 :ws_2_wvc1 => row3[15],
-                 :ws_2_wvc2 => row3[16],
-                 :ws_4_wvc1  => row3[17],
-                 :ws_4_wvc2 => row3[18],
-                 :ws_10_wvc1 => row3[19],
-                 :ws_10_wvc2 => row3[20],
-                 :gust_2_max => row3[21],
-                 :gust_4_max  => row3[22],
-                 :gust_10_max => row3[23],
-                 :tcdt => row3[24],
-                 :q  => row3[25]
-            }
-          #remove nil values
-          @entry2.reject! {|k,v| v.nil?}
-
-          #Post entry
-          # doc = @entry.to_json
-
-          # res2 = server.post("/"+ Couch::Config::COUCH_SEABIRD + "/", doc, user, password)
-     end
-   end
-    end
-
-
-
-#     end #unless
-#} #dir
+end #unless
+} #for each
 
 
 end #class
