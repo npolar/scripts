@@ -44,9 +44,7 @@ module Couch
     password = Couch::Config::PASSWORD1
     user = Couch::Config::USER1
 
-
-
-    #Get ready to put into database
+    #Get ready to put into database:q!
     server = Couch::Server.new(host, port)
 
     #Timestamp
@@ -59,29 +57,31 @@ module Couch
     @entry = Hash.new
 
     Dir.foreach("./data") {|x|
+        puts x.to_s
+        puts "--------------------"
+
+        #Throw away old array
+        @record_arr = []
+
       unless (x =~ /^\.\.?$/) #Drop . and .. dirs
 
-       #arr_mast holds all record values that exists in both files
-       @arr_mast = []
-
         #There are two files Mast and Straaling
-       CSV.foreach("./data/#{x}/1441_Npolar_Mast10min.dat") do |row|
-      # CSV.foreach("./data/20170506_1/1441_Npolar_Straaling10min.dat") do |row|
-            #Get uuid
-            uuid = getUUID(server)
-
-
+       CSV.foreach("./data/#{x}/1441_Npolar_Straaling10min.dat") do |row|
+     #  CSV.foreach("./data/20160606/1441_Npolar_Straaling10min.dat") do |row|
 
             #select all rows that starts with 20..
             if (row[0].match(/^20/))
 
+            #Get uuid
+            uuid = getUUID(server)
+           # puts row[1].to_s + "***"
 
             @entry = {
                  :schema => 'http://api.npolar.no/schema/radiation-weather',
                  :collection => 'radiation-weather',
                  :id => uuid,
                  :_id => uuid,
-                 :instrument_id => 'instrument_id',
+                 :instrument_station => 'M KNG-6',
                  :interval => '600',
                  :timestamp => row[0][0..9] + 'T' + row[0][11..18] + 'Z', #trenger iso8601
                  :record => row[1],
@@ -126,15 +126,16 @@ module Couch
                  :tcdt => nil,
                  :q  => nil
             }
-            end #if
 
-       CSV.foreach("./data/20170506_1/1441_Npolar_Mast10min.dat") do |row2|
+
+       CSV.foreach("./data/#{x}/1441_Npolar_Mast10min.dat") do |row2|
+
+
 
        #if row2[1] is equal to
-
-
-
        if (row[0].match(/^20/) && row[1] === row2[1])
+
+            # puts row2[1].to_s + "***2"
 
              @entry[:battv] = row2[2]
              @entry[:ptemp_c] = row2[3]
@@ -161,23 +162,82 @@ module Couch
              @entry[:tcdt] = row2[24]
              @entry[:q]  = row2[25]
        end
-     end #CSV
+
+    end #CSV
 
     #remove nil values
     @entry.reject! {|k,v| v.nil?}
 
     #Skip if empty!!
-    puts @entry[:record]
-    puts @entry[:timestamp]
+    puts @entry[:record].to_s + @entry[:timestamp].to_s + " " + @entry[:id].to_s
 
-
+    @record_arr.push(@entry[:record])
 
     #Post entry
     doc = @entry.to_json
 
     res2 = server.post("/weather-radiation/", doc, user, password)
 
+    end #if
     end #CSV
+
+    #Need to scan through file 1441_Npolar_Mast10min.dat if there are entries that do not exist in
+    CSV.foreach("./data/#{x}/1441_Npolar_Mast10min.dat") do |row3|
+       #if (row3[1].match(/^20/)
+
+       #Compare file entries with array with entries from Straaling.
+       res = @record_arr.select { |e| e == row3[1]}
+       res.empty? {
+             #Get uuid
+            uuid = getUUID(server)
+            puts row3[1].to_s + "   ANY"
+
+            @entry = {
+                 :schema => 'http://api.npolar.no/schema/radiation-weather',
+                 :collection => 'radiation-weather',
+                 :id => uuid,
+                 :_id => uuid,
+                 :instrument_station => 'M KNG-6',
+                 :interval => '600',
+                 :timestamp => row3[0][0..9] + 'T' + row[0][11..18] + 'Z', #trenger iso8601
+                 :record => row3[1],
+                 :battv => row3[2],
+                 :ptemp_c => row3[3],
+                 :battbankv_avg => row3[4],
+                 :at_2_avg => row3[5],
+                 :at_4_avg => row3[6],
+                 :at_10_avg => row3[7],
+                 :apogeefan_avg1 => row3[8],
+                 :apogeefan_avg2 => row3[9],
+                 :apogeefan_avg3 => row3[10],
+                 :rh_2_avg => row3[11],
+                 :rh_4_avg => row3[12],
+                 :rh_10_avg => row3[13],
+                 :p_sfc_avg => row3[14],
+                 :ws_2_wvc1 => row3[15],
+                 :ws_2_wvc2 => row3[16],
+                 :ws_4_wvc1  => row3[17],
+                 :ws_4_wvc2 => row3[18],
+                 :ws_10_wvc1 => row3[19],
+                 :ws_10_wvc2 =>  row3[20],
+                 :gust_2_max =>  row3[21],
+                 :gust_4_max  => row3[22],
+                 :gust_10_max => row3[23],
+                 :tcdt => row3[24],
+                 :q  => row3[25]
+            }
+
+            #remove nil values
+            @entry.reject! {|k,v| v.nil?}
+
+            #Post entry
+            doc = @entry.to_json
+
+            res2 = server.post("/weather-radiation/", doc, user, password)
+       } #any
+
+    end #CSV
+
 
 end #unless
 } #for each
