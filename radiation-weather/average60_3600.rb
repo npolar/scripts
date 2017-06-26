@@ -55,6 +55,7 @@ module Couch
     timestamp = dt.to_time.utc.iso8601
 
     @entry = Hash.new
+    pi = 3.14159
 
     Dir.foreach("./data") {|x|
 
@@ -63,18 +64,22 @@ module Couch
 
       unless ((x =~ /^\.\.?$/) && (!x.start_with? '2017')) #Drop . and .. dirs, start with 2017
 
+        #Initialization - @hour holds the current hour
+        @hour = 25
+        @at_2_avg =  @rh_2_avg = @ws_2_wvc1 = @ws_2_wvc2 = @sw_in_wpm2_avg = 0
+        @sw_out_wpm2_avg = @lw_in_corr_wpm2_avg = @lw_out_corr_wpm2_avg = 0
+        @count = 0
+
        #There are two files Mast and Straaling
        CSV.foreach("./data/#{x}/1441_Npolar_Straaling10min.dat") do |row|
-
-            @hour = 25
-            @at_2_avg =  @rh_2_avg = @ws_2_wvc1 = @ws_2_wvc2 = @sw_in_wpm2_avg = 0
-            @sw_out_wpm2_avg = @lw_in_corr_wpm2_avg = @lw_out_corr_wpm2_avg = 0
-            @row2 = nil
 
             #select all rows that starts with 20..
             if (row[0].match(/^20/))
 
                 @row2 = []
+
+                puts "____________________"
+                puts row[0][0..9] + 'T' + row[0][11..18] + 'Z'
 
                 #read the whole schema
                 CSV.foreach("./data/#{x}/1441_Npolar_Straaling10min.dat") do |row3|
@@ -84,32 +89,35 @@ module Couch
                 end
 
 
-                #Get all 6 of them
-                if  (row[0][11..12] == @hour ) || (@at_2_avg = @rh_2_avg = @ws_2_wvc1 = @ws_2_wvc2 = @sw_in_wpm2_avg = @sw_out_wpm2_avg = @lw_in_corr_wpm2_avg = @lw_out_corr_wpm2_avg == 0)
+                #Get all 6 of samples within an hour, summarize them
+                if  (row[0][11..12] == @hour ) || ((@at_2_avg == 0) && (@rh_2_avg == 0) && (@ws_2_wvc1 == 0) && (@ws_2_wvc2 == 0) && (@sw_in_wpm2_avg == 0) && (@sw_out_wpm2_avg == 0) && (@lw_in_corr_wpm2_avg == 0) && (@lw_out_corr_wpm2_avg == 0))
 
                     #Get the variables
-                    @at_2_avg = @at_2_avg + @row2[5],
-                    @rh_2_avg = @rh_2_avg + @row2[11]
-                    #The min form 10 min data is not the same as the min from 60 min data which is samples every 30 sek! Thus, do not use these values!
-                   #  @ws_2_min = @ws_2_min +
-                  #  @gust_2_max = @gust_2_max + row2[21]
-                    @ws_2_wvc1 = @ws_2_wvc1 + @row2[15]
-                    @ws_2_wvc2 = @ws_2_wvc2 + @row2[16]
-                    @sw_in_wpm2_avg = @sw_in_wpm2_avg + row[2]
-                    @sw_out_wpm2_avg = @sw_out_wpm2_avg + row[4]
-                    @lw_in_corr_wpm2_avg = @lw_in_corr_wpm2_avg + row[3]
-                    @lw_out_corr_wpm2_avg = @lw_out_corr_wpm2_avg + row[5]
+                    @at_2_avg = @at_2_avg + @row2[5].to_f
+                    puts @at_2_avg
+                    @rh_2_avg = @rh_2_avg + @row2[11].to_f
+                    #The min form 10 min data is not the same as the min from 60 min data which is samples every 30 sek!
+                    #Thus, exclude @ws_2_min and @gust_2_max
+                    @ws_2_wvc1 = @ws_2_wvc1 + @row2[15].to_f
+
+                    @ws_2_wvc2sin =  (sin(@row2[16].to_f * pi/180) + @ws_2_wvc2
+                    @ws_2_wvc2cos =  (cos(@row2[16].to_f * pi/180) + @ws_2_wvc2
+
+                    @sw_in_wpm2_avg = @sw_in_wpm2_avg + row[2].to_f
+                    @sw_out_wpm2_avg = @sw_out_wpm2_avg + row[4].to_f
+                    @lw_in_corr_wpm2_avg = @lw_in_corr_wpm2_avg + row[3].to_f
+                    @lw_out_corr_wpm2_avg = @lw_out_corr_wpm2_avg + row[5].to_f
+
+                    #@count holds the number for averaging
+                    @count= @count+1
 
                 else
 
-                    #Update @hour to current hour of the day
-                    @hour = row[0][11..12]
-
-                    #Est the wind direction
-                    # u_east = mean(sin(WD * pi/180))
-                    # u_north = mean(cos(WD * pi/180))
-                    # avg_WD = arctan2(u_east, u_north) * 180/pi
-                    # avg_WD = (360 + unit_WD) % 360
+                    #Est the wind direction, ws_2_wvc2
+                    u_east = @ws_2_wvc2sin/@count
+                    u_north = @ws_2_wvc2cos/@count
+                    unit_WD = atan2(u_east, u_north) * 180/pi
+                    sum_ws_2_wvc2 = (360 + unit_WD) % 360
 
                     #Get uuid
                     uuid = getUUID(server)
@@ -122,23 +130,21 @@ module Couch
                         :instrument_station => 'AWS KNG-6',
                         :interval => '3600',
                         :timestamp => row[0][0..9] + 'T' + row[0][11..18] + 'Z', #trenger iso8601
-                        :record => row[1],
-                        :at_2_avg => @at_2_avg,
-                        :rh_2_avg => @rh_2_avg,
-                        :ws_2_wvc1 => @ws_2_wvc1,
-                        :ws_2_wvc2 => @ws_2_wvc2,
-                        :sw_in_wpm2_avg => @sw_in_wpm2_avg,
-                        :sw_out_wpm2_avg => @sw_out_wpm2_avg,
-                        :lw_in_corr_wpm2_avg => @lw_in_corr_wpm2_avg,
-                        :lw_out_corr_wpm2_avg => @lw_out_corr_wpm2_avg,
+                        :record => row[1], #mean from
+                        :at_2_avg => @at_2_avg/@count,
+                        :rh_2_avg => @rh_2_avg/@count,
+                        :ws_2_wvc1 => @ws_2_wvc1/@count,
+                        :ws_2_wvc2 => sum@ws_2_wvc2,
+                        :sw_in_wpm2_avg => @sw_in_wpm2_avg/@count,
+                        :sw_out_wpm2_avg => @sw_out_wpm2_avg/@count,
+                        :lw_in_corr_wpm2_avg => @lw_in_corr_wpm2_avg/@count,
+                        :lw_out_corr_wpm2_avg => @lw_out_corr_wpm2_avg/@count,
                         :created => timestamp,
                         :updated => timestamp,
                         :created_by => user,
                         :updated_by => user
                     }
 
-                    @at_2_avg =  @rh_2_avg = @ws_2_wvc1 = @ws_2_wvc2 = @sw_in_wpm2_avg = nil
-                    @sw_out_wpm2_avg = @lw_in_corr_wpm2_avg = @lw_out_corr_wpm2_avg = nil
 
                     #remove nil values
                     @entry.reject! {|k,v| v.nil?}
@@ -147,7 +153,14 @@ module Couch
                     #Post entry
                   #  doc = @entry.to_json
                   #  res2 = server.post("/weather-radiation/", doc, user, password)
+
+                    @at_2_avg =  @rh_2_avg = @ws_2_wvc1 = @ws_2_wvc2 = @sw_in_wpm2_avg = 0
+                    @sw_out_wpm2_avg = @lw_in_corr_wpm2_avg = @lw_out_corr_wpm2_avg = @count = 0
+
                 end
+
+                #Update @hour to current hour of the day
+                @hour = row[0][11..12]
 
     end #if
     end #CSV
