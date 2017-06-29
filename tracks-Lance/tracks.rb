@@ -64,15 +64,28 @@ module Couch
                previous = "0"
                CSV.foreach("./data/#{x[0..7]}nav.txt") do |nav|
 
+                  str = nav.to_s
+
                   #Sample every min. Select all rows that starts with 00..
-                  if (nav[0].match(/^00/)) && (nav[0] != previous)
+                 if (nav[0].match(/^00/)) && (nav[0] != previous)
                       previous = nav[0]
-                      puts nav[0]
+                      puts nav[0].to_s + "time"
+                 end
+
+                  #Fetch course, speed
+                  if (str[0..7].match('\[\"\$INVTG'))
+                     puts nav[1].to_s + "  " + nav[5].to_s + " $INVTG--"
                   end
+
+                  #Fetch lat, lng
+                  if (str[0..7].match('\[\"\$INGGA'))
+                     puts nav[2].to_s + " " + nav[4].to_s  + " $INGGA--"
+                  end
+
                end
 
-               #Extract info from met file
-=begin              CSV.foreach("./data/#{x[0..7]}met.txt") do |met|
+=begin              #Extract info from met file
+              CSV.foreach("./data/#{x[0..7]}met.txt") do |met|
                   #Find value closest to sampling time
                   puts met.to_s + "  ccccc"
                end
