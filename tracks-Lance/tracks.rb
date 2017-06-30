@@ -53,80 +53,9 @@ module Couch
     dt = DateTime.new(c[0].to_i, c[1].to_i, c[2].to_i, 12, 0, 0, 0)
     timestamp = dt.to_time.utc.iso8601
 
-    @entry = Hash.new
-
-    Dir.foreach("./data") {|x|
-
-        #If file .nav file
-        if x == "#{x[0..7]}nav.txt"
-
-               #Extract info from nav file
-               previous = "0"
-               CSV.foreach("./data/#{x[0..7]}nav.txt") do |nav|
-
-                  str = nav.to_s
-
-                  #Sample every min. Select all rows that starts with 00..
-                 if (nav[0].match(/^00/)) && (nav[0] != previous)
-                      previous = nav[0]
-                      puts nav[0].to_s + "time"
-                 end
-
-                  #Fetch course, speed
-                  if (str[0..7].match('\[\"\$INVTG'))
-                     puts nav[1].to_s + "  " + nav[5].to_s + " $INVTG--"
-                  end
-
-                  #Fetch lat, lng
-                  if (str[0..7].match('\[\"\$INGGA'))
-                     puts nav[2].to_s + " " + nav[4].to_s  + " $INGGA--"
-                  end
-
-               end
-
-=begin              #Extract info from met file
-              CSV.foreach("./data/#{x[0..7]}met.txt") do |met|
-                  #Find value closest to sampling time
-                  puts met.to_s + "  ccccc"
-               end
-
-               begin
-                    #Extract info from depth file
-                    CSV.foreach("./data/#{x[0..7]}depth.txt") do |depth|
-                           #Find value closest to sampling time
-                          puts depth.to_s + "  ccccc"
-                    end
-               ensure
-               end
-
-               begin
-                    #Extract info from wind file
-                    CSV.foreach("./data/#{x[0..7]}wind.txt") do |wind|
-                           #Find value closest to sampling time
-                          puts wind.to_s + "  ccccc"
-                    end
-                ensure
-                end
-=end
-
-               abort("ending")
-
-            #Get uuid
-            uuid = getUUID(server)
-
-            #If date between 30.05 and 20.04 it is the "polar bear monitoring MOSJ" exped
-            if  (Date.parse(x[0..1]+"/"+x[2..3]+"/"+x[4..7])).between?(Date.parse("20/04/2017"),Date.parse("30/03/2017"))
-              @code = "polar bear monitoring MOSJ"
-              @expedition = "https://data.npolar.no/expedition/8b4b8b5c-7261-4abd-a56b-37cbbc078e38"
-            else #else "ICE-Whales"
-              @code = "ICE-Whales"
-              @expedition = "https://data.npolar.no/expedition/fcf8bad7-2b0a-47a7-bb97-9115d8855638"
-            end
-
-
-            @entry = {
-                 :id => uuid,
-                 :_id => uuid,
+    @entry = {
+                 :id => '',
+                 :_id => '',
                  :air_pressure => '',
                  :air_temperature => '',
                  :code => @code,
@@ -139,7 +68,7 @@ module Couch
                  :humidity => '',
                  :latitude => '',
                  :longitude => '',
-                 :measured => 'time----',
+                 :measured => '',
                  :object => "ship",
                  :platform => "RV Lance",
                  :sampling_rate => "",
@@ -150,26 +79,70 @@ module Couch
                  :updated_by => user,
                  :wind_direction_mean => "",
                  :wind_speed_mean => ""
-            }
-
-            #Get met.txt file
-
-            #Get depth.txt file -if existing
-
-            #Get wind.txt - if existing
+    }
 
 
-            #remove nil values
-            @entry.reject! {|k,v| v.nil?}
+    Dir.foreach("./data") {|x|
 
-            #Post entry
-            doc = @entry.to_json
-            puts doc
+        #If file .nav file
+        if x == "#{x[0..7]}nav.txt"
 
-           # res2 = server.post("/expedition_track/", doc, user, password)
+               #Extract info from nav file, do not repeat the same timestamp more than once
+               previous = "0"
 
-    end #if
-} #for each
+            File.open("./data/#{x[0..7]}nav.txt").each do |p|
+
+                 #Count through p
+                 if ((p.match(/^00/)) && (p.to_s != previous.to_s))
+                    previous = p
+                    @entry[:measured] = p.chomp("\r\n")
+
+                    #Get uuid
+                    uuid = getUUID(server)
+                    @entry[:id] = uuid
+                    @entry[:_id] = uuid
+
+
+
+                    #If date between 30.05 and 20.04 it is the "polar bear monitoring MOSJ" exped
+                    if  (Date.parse(p[0..1]+"/"+p[2..3]+"/"+p[4..7])).between?(Date.parse("20/04/2017"),Date.parse("30/03/2017"))
+                      @code = "polar bear monitoring MOSJ"
+                      @expedition = "https://data.npolar.no/expedition/8b4b8b5c-7261-4abd-a56b-37cbbc078e38"
+                    else #else "ICE-Whales"
+                      @code = "ICE-Whales"
+                      @expedition = "https://data.npolar.no/expedition/fcf8bad7-2b0a-47a7-bb97-9115d8855638"
+                    end
+
+                    #Fetch values from other files here
+
+
+                    #remove nil values
+                    @entry.reject! {|k,v| v.nil?}
+
+                    #Post entry
+                    doc = @entry.to_json
+                    puts doc
+
+                    #res2 = server.post("/expedition_track/", doc, user, password)
+
+                 elsif (p.match(/^\$INVTG/))
+                    q = p.split(",")
+                    @entry[:course] = q[1]
+                    @entry[:speed] = q[5]
+                 elsif (p.match(/^\$INGGA/))
+                    q = p.split(",")
+                    @entry[:latitude] = q[2] #Needs conversion
+                    @entry[:longitude] = q[4] #Needs conversion
+                 else
+                    # do nothing
+                  end
+               end
+
+             #  file.close
+              abort("ending")
+        end
+    }
+
 
 
 end #class
