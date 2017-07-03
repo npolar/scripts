@@ -25,7 +25,6 @@ module Couch
        #Fetch a UUID from couchdb
        res = server.get("/_uuids")
 
-
        #Extract the UUID from reply
        uuid = (res.body).split('"')[3]
 
@@ -35,6 +34,107 @@ module Couch
        uuid.insert 18, "-"
        uuid.insert 23, "-"
        return uuid
+    end
+
+    #read from met file
+    def self.fetch_met(x)
+       #Fetch file and lines based on current date
+       cur_date = x[8..9] + x[5..6] + x[0..3]
+       air_pressure = air_temperature = humidity = sea_temperature = 0
+
+       File.open("./data/#{cur_date}met.txt").each do |q|
+
+
+         #Split array into values
+         q_arr = q.split(" ")
+
+         if (q.match(/#{cur_date}/))
+              timestamp = DateTime.parse(x,"%Y-%m-%dT%H:%M:%SZ")
+              #Need to parse date
+              dt =  q[10..13] + "-" + q[8..9] + "-" + q[6..7] + "T" + q[4..5] + ":" + q[2..3] + ":" + q[0..1] + "Z"
+              cur_datetime =  DateTime.parse(dt,"%Y-%m-%dT%H:%M:%SZ")
+              #As long as time is before our timestamp, keep updating all parameters
+              #If we receive a datetime after, issue values
+              if timestamp < cur_datetime
+                 return  air_pressure, air_temperature, humidity, sea_temperature
+              end
+         elsif (q.match(/^04 Air temperature/))
+            air_temperature = q_arr[3]
+         elsif (q.match(/^06 Relative humidity/))
+            humidity = q_arr[3]
+         elsif (q.match(/^07 Air pressure/))
+            air_pressure = q_arr[3]
+         elsif (q.match(/^08 S.water temperature/))
+            sea_temperature = q_arr[3]
+         end
+
+       end
+    end
+
+    #Read from depth file
+    def self.fetch_depth(x)
+      #Fetch file and lines based on current date
+      cur_date = x[8..9] + x[5..6] + x[0..3]
+      depth = 0
+
+      begin
+       file = File.open("./data/#{cur_date}depth.txt").each do |q|
+
+          #Split array into values
+          q_arr = q.split(",")
+          #Need to parse date
+          timestamp = DateTime.parse(x,"%Y-%m-%dT%H:%M:%SZ")
+          dt =  q[10..13] + "-" + q[8..9] + "-" + q[6..7] + "T" + q[4..5] + ":" + q[2..3] + ":" + q[0..1] + "Z"
+          cur_datetime =  DateTime.parse(dt,"%Y-%m-%dT%H:%M:%SZ")
+          #As long as time is before our timestamp, keep updating all parameters
+          #If we receive a datetime after, issue values
+          if timestamp < cur_datetime
+                return  depth
+          else
+                depth = q_arr[2]
+          end
+
+       end #file
+      rescue
+        #No depth file
+        return nil
+      ensure
+        file.close unless file.nil?
+      end
+
+    end
+
+    #Read from wind file
+    def self.fetch_wind(x)
+       #Fetch file and lines based on current date
+       cur_date = x[8..9] + x[5..6] + x[0..3]
+       wind_speed_mean = wind_direction_mean = 0
+
+      begin
+       file = File.open("./data/#{cur_date}wind.txt").each do |q|
+
+          #Split array into values
+          q_arr = q.split(",")
+          #Need to parse date
+          timestamp = DateTime.parse(x,"%Y-%m-%dT%H:%M:%SZ")
+          dt =  q[10..13] + "-" + q[8..9] + "-" + q[6..7] + "T" + q[4..5] + ":" + q[2..3] + ":" + q[0..1] + "Z"
+          cur_datetime =  DateTime.parse(dt,"%Y-%m-%dT%H:%M:%SZ")
+          #As long as time is before our timestamp, keep updating all parameters
+          #If we receive a datetime after, issue values
+          if timestamp < cur_datetime
+                return  wind_speed_mean, wind_direction_mean
+          else
+                wind_speed_mean = q_arr[4]
+                wind_direction_mean = q_arr[2]
+          end
+
+       end #file
+      rescue
+        #No wind file
+        return nil, nil
+      ensure
+        file.close unless file.nil?
+      end
     end
 
     #Set server
@@ -92,29 +192,30 @@ module Couch
 
             File.open("./data/#{x[0..7]}nav.txt").each do |p|
 
-                 #Count through p
+                 #Sample every minute, discard other samples
                  if ((p.match(/^00/)) && (p.to_s != previous.to_s))
+                    #Make sure the same time is not sampled twice
                     previous = p
-                    @entry[:measured] = p.chomp("\r\n")
+                    @entry[:measured] = p[10..13] + "-" + p[8..9] + "-" + p[6..7] + "T" + p[0..1] + ":" + p[2..3] + ":" + p[4..5] + "Z"
 
                     #Get uuid
                     uuid = getUUID(server)
                     @entry[:id] = uuid
                     @entry[:_id] = uuid
 
-
-
                     #If date between 30.05 and 20.04 it is the "polar bear monitoring MOSJ" exped
-                    if  (Date.parse(p[0..1]+"/"+p[2..3]+"/"+p[4..7])).between?(Date.parse("20/04/2017"),Date.parse("30/03/2017"))
-                      @code = "polar bear monitoring MOSJ"
-                      @expedition = "https://data.npolar.no/expedition/8b4b8b5c-7261-4abd-a56b-37cbbc078e38"
+                    if  (Date.parse(p[6..7]+"/"+p[8..9]+"/"+p[10..13])).between?(Date.parse("20/04/2017"),Date.parse("30/03/2017"))
+                      @entry[:code] = "polar bear monitoring MOSJ"
+                      @entry[:expedition] = "https://data.npolar.no/expedition/8b4b8b5c-7261-4abd-a56b-37cbbc078e38"
                     else #else "ICE-Whales"
-                      @code = "ICE-Whales"
-                      @expedition = "https://data.npolar.no/expedition/fcf8bad7-2b0a-47a7-bb97-9115d8855638"
+                      @entry[:code] = "ICE-Whales"
+                      @entry[:expedition] = "https://data.npolar.no/expedition/fcf8bad7-2b0a-47a7-bb97-9115d8855638"
                     end
 
                     #Fetch values from other files here
-
+                    @entry[:air_pressure], @entry[:air_temperature], @entry[:humidity], @entry[:sea_temperature] = fetch_met(@entry[:measured].to_s)
+                    @entry[:depth] = fetch_depth(@entry[:measured].to_s)
+                    @entry[:wind_speed_mean], @entry[:wind_direction_mean] = fetch_wind(@entry[:measured].to_s)
 
                     #remove nil values
                     @entry.reject! {|k,v| v.nil?}
@@ -142,6 +243,7 @@ module Couch
               abort("ending")
         end
     }
+
 
 
 
