@@ -91,7 +91,7 @@ module Couch
           if timestamp < cur_datetime
                 return  depth
           else
-                depth = q_arr[2]
+                depth = q_arr[4]
           end
 
        end #file
