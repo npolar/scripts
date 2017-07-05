@@ -36,6 +36,15 @@ module Couch
        return uuid
     end
 
+    #Convert lat/lng to decimaldegrees
+    def self.decimaldegrees(str)
+       #remove all leading 0, get degrees
+       q=(str.to_f/100).to_i
+       #get decimalpart
+       m =(str.to_f/100).modulo(1)
+       return m*100/60 + q
+    end
+
     #read from met file
     def self.fetch_met(x)
        #Fetch file and lines based on current date
@@ -59,13 +68,13 @@ module Couch
                  return  air_pressure, air_temperature, humidity, sea_temperature
               end
          elsif (q.match(/^04 Air temperature/))
-            air_temperature = q_arr[3]
+            air_temperature = q_arr[3].to_f
          elsif (q.match(/^06 Relative humidity/))
-            humidity = q_arr[3]
+            humidity = q_arr[3].to_f
          elsif (q.match(/^07 Air pressure/))
-            air_pressure = q_arr[3]
+            air_pressure = q_arr[3].to_f
          elsif (q.match(/^08 S.water temperature/))
-            sea_temperature = q_arr[3]
+            sea_temperature = q_arr[3].to_f
          end
 
        end
@@ -88,10 +97,10 @@ module Couch
           cur_datetime =  DateTime.parse(dt,"%Y-%m-%dT%H:%M:%SZ")
           #As long as time is before our timestamp, keep updating all parameters
           #If we receive a datetime after, issue values
-          if timestamp < cur_datetime
+          if timestamp <= cur_datetime
                 return  depth
           else
-                depth = q_arr[4]
+                depth = q_arr[4].to_f
           end
 
        end #file
@@ -124,8 +133,8 @@ module Couch
           if timestamp < cur_datetime
                 return  wind_speed_mean, wind_direction_mean
           else
-                wind_speed_mean = q_arr[4]
-                wind_direction_mean = q_arr[2]
+                wind_speed_mean = q_arr[4].to_f
+                wind_direction_mean = q_arr[2].to_f
           end
 
        end #file
@@ -138,10 +147,10 @@ module Couch
     end
 
     #Set server
-    host = Couch::Config::HOST1
-    port = Couch::Config::PORT1
-    password = Couch::Config::PASSWORD1
-    user = Couch::Config::USER1
+    host = Couch::Config::HOST2
+    port = Couch::Config::PORT2
+    password = Couch::Config::PASSWORD2
+    user = Couch::Config::USER2
 
     #Get ready to put into database:q!
     server = Couch::Server.new(host, port)
@@ -171,7 +180,7 @@ module Couch
                  :measured => '',
                  :object => "ship",
                  :platform => "RV Lance",
-                 :sampling_rate => "",
+                 :sampling_rate => "60", #sampling each minute
                  :schema => "http://api.npolar.no/schema/expedition_track",
                  :sea_temperature => "",
                  :speed => "",
@@ -196,7 +205,7 @@ module Couch
                  if ((p.match(/^00/)) && (p.to_s != previous.to_s))
                     #Make sure the same time is not sampled twice
                     previous = p
-                    @entry[:measured] = p[10..13] + "-" + p[8..9] + "-" + p[6..7] + "T" + p[0..1] + ":" + p[2..3] + ":" + p[4..5] + "Z"
+                    @entry[:measured] = p[10..13] + "-" + p[8..9] + "-" + p[6..7] + "T" + p[4..5] + ":" + p[2..3] + ":" + p[0..1] + "Z"
 
                     #Get uuid
                     uuid = getUUID(server)
@@ -204,7 +213,12 @@ module Couch
                     @entry[:_id] = uuid
 
                     #If date between 30.05 and 20.04 it is the "polar bear monitoring MOSJ" exped
-                    if  (Date.parse(p[6..7]+"/"+p[8..9]+"/"+p[10..13])).between?(Date.parse("20/04/2017"),Date.parse("30/03/2017"))
+                   # puts Date.parse(p[6..7]+"/"+p[8..9]+"/"+p[10..13])
+                   # puts (Date.parse(p[6..7]+"/"+p[8..9]+"/"+p[10..13])).between?(Date.parse("30/03/2017"),Date.parse("20/04/2017"))
+                   # puts "YESS!!!!!!----------------------"
+
+                    if  ((Date.parse(p[6..7]+"/"+p[8..9]+"/"+p[10..13])).between?(Date.parse("30/03/2017"),Date.parse("20/04/2017")))
+                      puts "slected"
                       @entry[:code] = "polar bear monitoring MOSJ"
                       @entry[:expedition] = "https://data.npolar.no/expedition/8b4b8b5c-7261-4abd-a56b-37cbbc078e38"
                     else #else "ICE-Whales"
@@ -228,19 +242,19 @@ module Couch
 
                  elsif (p.match(/^\$INVTG/))
                     q = p.split(",")
-                    @entry[:course] = q[1]
-                    @entry[:speed] = q[5]
+                    @entry[:course] = q[1].to_f
+                    @entry[:speed] = q[5].to_f
                  elsif (p.match(/^\$INGGA/))
                     q = p.split(",")
-                    @entry[:latitude] = q[2] #Needs conversion
-                    @entry[:longitude] = q[4] #Needs conversion
+                    @entry[:latitude] = decimaldegrees(q[2]) #Conversion to decimal degrees
+                    @entry[:longitude] = q[5] == 'E'? decimaldegrees(q[4]) : (-1)*decimaldegrees(q[4]) #Conversion to decimal degrees
                  else
                     # do nothing
                   end
                end
 
              #  file.close
-              abort("ending")
+
         end
     }
 
