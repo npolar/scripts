@@ -25,16 +25,30 @@ read -e -p "Enter installation path: " -i "/opt/d" DPATH
 DPATH=`readlink -m $DPATH`
 mkdir -p $DPATH/src
 
-if [ $? -eq 1 ]; then
+if [[ $? -eq 1 || ! -w $DPATH/src ]]; then
 	echo "Try running as root, or change installation path"
 	exit
 fi
 
 cd $DPATH/src
 
-git clone https://github.com/D-Programming-Language/dmd.git
-git clone https://github.com/D-Programming-Language/druntime.git
-git clone https://github.com/D-Programming-Language/phobos.git
+if [[ ! -d dmd ]]; then
+	git clone https://github.com/D-Programming-Language/dmd.git
+else
+	 cd dmd && git pull && cd ..
+fi
+
+if [[ ! -d druntime ]]; then
+	git clone https://github.com/D-Programming-Language/druntime.git
+else
+	cd druntime && git pull && cd ..
+fi
+
+if [[ ! -d phobos ]]; then
+	git clone https://github.com/D-Programming-Language/phobos.git
+else
+	cd phobos && git pull && cd ..
+fi
 
 cd dmd
 git checkout stable
@@ -86,9 +100,12 @@ fi
 
 read -e -p "Install dub (The D package manager)? [y/n]: " -i "y" YESNO
 if [[ $YESNO = "y" ]]; then
-	git clone https://github.com/D-Programming-Language/dub.git src/dub
+	if [[ ! -d src/dub ]]; then
+		git clone https://github.com/D-Programming-Language/dub.git src/dub && cd src/dub
+	else
+		cd src/dub && git stash && git pull && git stash clear
+	fi
 	
-	cd src/dub
 	DMD=$DPATH/bin/dmd
 	source ./build.sh
 	cp bin/dub ../../bin/
