@@ -212,10 +212,6 @@ module Couch
                     @entry[:id] = uuid
                     @entry[:_id] = uuid
 
-                    #If date between 30.05 and 20.04 it is the "polar bear monitoring MOSJ" exped
-                   # puts Date.parse(p[6..7]+"/"+p[8..9]+"/"+p[10..13])
-                   # puts (Date.parse(p[6..7]+"/"+p[8..9]+"/"+p[10..13])).between?(Date.parse("30/03/2017"),Date.parse("20/04/2017"))
-                   # puts "YESS!!!!!!----------------------"
 
                     if  ((Date.parse(p[6..7]+"/"+p[8..9]+"/"+p[10..13])).between?(Date.parse("30/03/2017"),Date.parse("20/04/2017")))
                       puts "slected"
@@ -238,7 +234,7 @@ module Couch
                     doc = @entry.to_json
                     puts doc
 
-                    #res2 = server.post("/expedition_track/", doc, user, password)
+                    res2 = server.post("/expedition_track/", doc, user, password)
 
                  elsif (p.match(/^\$INVTG/))
                     q = p.split(",")
@@ -248,6 +244,7 @@ module Couch
                     q = p.split(",")
                     @entry[:latitude] = decimaldegrees(q[2]) #Conversion to decimal degrees
                     @entry[:longitude] = q[5] == 'E'? decimaldegrees(q[4]) : (-1)*decimaldegrees(q[4]) #Conversion to decimal degrees
+
                  else
                     # do nothing
                   end
