@@ -65,11 +65,14 @@ git checkout stable
 echo "Building phobos..."
 make -j5 -f posix.mak MODEL=$DARCH DMD=../dmd/src/dmd RELEASE=1
 
+echo "Removing old installation..."
+rm -rf ../../{bin,lib$DARCH,include/d2}
+
 echo "Installing dmd..."
 cd ../dmd
 mkdir -p $DPATH/bin
 cp src/dmd ../../bin/
-echo -e "[Environment]\nDFLAGS=-I$DPATH/include/d2 -L-L$DPATH/lib$DARCH -L--export-dynamic" > ../../bin/dmd.conf
+echo -e "[Environment]\nDFLAGS=-I$DPATH/include/d2/ -L-L$DPATH/lib$DARCH/" > ../../bin/dmd.conf
 
 echo "Installing druntime..."
 cd ../druntime
@@ -80,8 +83,8 @@ echo "Installing phobos..."
 cd ../phobos
 cp -r {*.d,etc,std} ../../include/d2/
 mkdir -p $DPATH/lib$DARCH
-cp generated/linux/release/$DARCH/libphobos2.a ../../lib$DARCH/
-cp generated/linux/release/$DARCH/libphobos2.so ../../lib$DARCH/
+cp generated/linux/release/$DARCH/libphobos2.* ../../lib$DARCH/
+rm ../../lib$DARCH/*.o
 
 echo "Successfully installed to: $DPATH"
 cd ../../
@@ -89,6 +92,7 @@ cd ../../
 read -e -p "Create symlink to dmd? [y/n]: " -i "y" YESNO
 if [[ $YESNO = "y" ]]; then
 	sudo ln -fs $DPATH/bin/dmd /usr/local/bin/dmd
+        sudo ln -fs $DPATH/lib$DARCH/libphobos2.* /usr/lib$DARCH/.
 else
 	echo "Symlink not added. You might want to add '$DPATH/bin' to your PATH"
 fi
