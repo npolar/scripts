@@ -21,13 +21,14 @@ module Couch
   class ConvertSeabird
 
     #Set server
-    host = Couch::Config::HOST1
-    port = Couch::Config::PORT1
-    password = Couch::Config::PASSWORD1
-    user = Couch::Config::USER1
+    host = Couch::Config::HOST3
+    port = Couch::Config::PORT3
+    password = Couch::Config::PASSWORD3
+    user = Couch::Config::USER3
 
     #Change the incoming string into GeoJSON object
-    def self.createGeoJSON(inputStr)
+    def self.createGeoJSON(inputStr, point_lat, point_lng)
+        puts point_lat, point_lng
         #Split ,
         i =  inputStr.gsub(/\s+/, "")
         latLng = (i).split(",")
@@ -44,10 +45,22 @@ module Couch
 
         end
 
+        #Copy the first coord into the last
+        unless latlngdec_arr[0] &  latlngdec_arr[latlngdec_arr.length-1] == latlngdec_arr[0]
+          latlngdec_arr.push(latlngdec_arr[0])
+        end
+
         return {
-                 :type => "polygon",
-                 :coordinates => latlngdec_arr
-         }
+                :type => "GeometryCollection",
+                :geometries => [
+                  {
+                    :type => "Point",
+                    :coordinates => [point_lng, point_lat]
+                  },
+                  {
+                    :type => "Polygon",
+                    :coordinates => [latlngdec_arr]
+                  }]}
     end
 
 
@@ -176,7 +189,7 @@ module Couch
          #Get geoJSON object
          @geometry = nil
          unless @colony_row[:MultiPoints].nil?
-           @geometry = createGeoJSON(@colony_row[:MultiPoints])
+           @geometry = createGeoJSON(@colony_row[:MultiPoints], @lat_res.round(3),@long_res.round(3))
          end
 
          #Change to ISOdate
@@ -214,62 +227,6 @@ module Couch
             #If colony match the colony where the counting was carried out..
             if @colony_row[:ColonyID].eql? @count_row[:colonyID]
 
-=begin        #Create a new object - start with reference
-              @reference_obj = nil
-              @refID = @count_row[:CountReference]
-              for r in 0..reference_hash.size-1 do
-                @ref_row = reference_hash[r]
-                if @ref_row[:refID].eql? @refID.to_s
-                 @reference_obj = {
-                   :ref_id => @ref_row[:refID],
-                   :authors => clean_res(@ref_row[:authors]),
-                   :title => clean_res(@ref_row[:title]),
-                   :year => @ref_row[:year],
-                   :volume => @ref_row[:volume].to_i > 0 ? @ref_row[:volume]:nil,
-                   :pages => @ref_row[:pages],
-                   :journal => @ref_row[:journal]
-                }
-
-                  #remove nil values
-                  @reference_obj.reject! {|k,v| v.nil?}
-               end
-              end
-=end
-
-               #Create a new object - find persons
-      #         @people_arr = []
-               #Get the countID, one number
-         #      @count_countID = @count_row[:countID]
-
-               #need to find the persons connected to the countID number without SQL
-=begin               for k in 0..colonycountobserver_hash.size-1 do
-                   @colcount_row = colonycountobserver_hash[k]
-                   if @colcount_row[:CountID].eql? @count_countID
-                       @count_observerID = @colcount_row[:ObserverID]  #Countobserver is  personID
-
-                       for m in 0..people_hash.size-1 do
-                            @people_row = people_hash[m]
-                         if @people_row[:ObserverID].eql? @count_observerID
-
-                             @people_obj =  {
-                               :obs_id => @people_row[:ObserverID],
-                               :first_name => @people_row[:FirstName],
-                               :last_name => @people_row[:LastName],
-                               :address => @people_row[:Address],
-                               :postal_code => @people_row[:PostalCode],
-                               :country => @people_row[:Country],
-                               :phone => @people_row[:Telephone]
-                            }
-
-                            #remove nil values
-                            @people_obj.reject! {|k,v| v.nil?}
-
-                            @people_arr << @people_obj
-                         end
-                        end
-                    end
-                end
-=end
 
                 #BreedingID converted
                 @breedingID =  @count_row[:breedingID]
@@ -327,14 +284,14 @@ module Couch
                 :collection => 'seabird-colony',
                 :lang => 'en',
                 :access_id => @colony_row[:ColonyID],
-                :colony_last_update => @colony_last_update,   #to datexxxx
+                :colony_last_update => @colony_last_update,
                 :colony_name => @colony_row[:ColonyName1],
                 :colony_alternative_name => @colony_row[:ColonyName2],
                 :conservation_type => @conservation_type_res != nil ? @conservation_type_res[:type] : nil,
                 :region => @region_res[:regionname],
                 :zone => @zone_res[:zonename],
-                :latitude => @lat_res.round(3),
-                :longitude => @long_res.round(3),
+               # :latitude => @lat_res.round(3),
+               # :longitude => @long_res.round(3),
                 :location_accuracy => @positionaccuracy_res[:PositionAccuracy],
                 :colony_type => @colonytype_res[:ColonyType].downcase,
                 :ownership => @ownership_res[:ownership].downcase,
@@ -381,8 +338,19 @@ module Couch
 
     #Post coursetype
     doc = @colony_obj.to_json
+    puts doc
 
-    res2 = server.post("/"+ Couch::Config::COUCH_SEABIRD + "/", doc, user, password)
+     #Post to server - must include auth in new server
+   # @uri = URI.parse('http://api.npolar.no/sighting-excel')
+   # http = Net::HTTP.new(@uri.host, @uri.port)
+   # req = Net::HTTP::Post.new(@uri.path,{'Authorization' => Couch::Config::AUTH3, 'Content-Type' => 'application/json' })
+   # req.body = doc
+   # req.basic_auth(user3, password3)
+   # res = http.request(req)
+    #puts (res.header).inspect
+    #puts (res.body).inspect
+
+   ## res2 = server.post("/"+ Couch::Config::COUCH_SEABIRD + "/", doc, user, password)
 
 end #if
 end #count
