@@ -43,7 +43,6 @@ module Couch
     for i in 0..((res.size)-1)
 
       id =  res[i]["_id"]
-      #id = "2cded4c8611e7e35ff91216a062e8ff6"
 
       #Fetch the entry with the id from database
       db_entry = server.get("/"+ database + "/"+id)
@@ -96,9 +95,6 @@ module Couch
 
        end
 
-
-      # puts @geometry_collection.to_json
-
        #delete lat,lng
        @entry.tap { |k| k.delete("latitude") }
        @entry.tap { |k| k.delete("longitude") }
@@ -112,24 +108,17 @@ module Couch
 
        #Post coursetype
        doc = @entry.to_json
-
-
+       puts doc
 
        #Post to server
-       @uri = URI.parse('http://' + host + '/' + database)
+       @uri = URI.parse('http://api-test.data.npolar.no/seabird-colony')
        http = Net::HTTP.new(@uri.host, @uri.port)
        req = Net::HTTP::Post.new(@uri.path,{'Authorization' => auth, 'Content-Type' => 'application/json' })
        req.body = doc
        req.basic_auth(user, password)
-       res = http.request(req)
-       puts (res.header).inspect
-       puts (res.body).inspect
-
-       #exit
-
-
-       #res2 = server.post("/"+ Couch::Config::COUCH_SEABIRD + "/", doc, user, password)
-
+       res2 = http.request(req)
+       puts (res2.header).inspect
+       #puts (res2.body).inspect
 
     end
 
