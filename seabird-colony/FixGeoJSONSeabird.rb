@@ -30,11 +30,25 @@ module Couch
     database = "seabird-colony"
 
 
+    #Enforce right-hand rule: Sum over edges. (x2 − x1)(y2 + y1).
+    #If the result is positive the curve is clockwise,
+    #if it's negative the curve is counter-clockwise
+    def self.rightHandRule(arr)
+      size = arr.size
+      sum = sum2 = 0
+      for i in 0..(size-2)
+          sum2 = (arr[i+1][0]-arr[i][0])*(arr[i+1][1] + arr[i][1])
+          sum = sum + sum2
+      end
+      return sum
+    end
+
+
     #Get ready to put into database
     server = Couch::Server.new(host, port)
 
     #Fetch a UUIDs from couchdb
-    db_res = server.get("/"+ database + "/?q=&fields=_id&format=json&variant=array")
+    db_res = server.get("/"+ database + "/?q=&fields=_id&format=json&variant=array&limit=all")
 
     #Get ids
     res = JSON.parse(db_res.body)
@@ -48,44 +62,53 @@ module Couch
       db_entry = server.get("/"+ database + "/"+id)
       @entry = JSON.parse(db_entry.body)
 
+      if @entry['latitude']
+
       #create a new geometry_collection
       geometry = @entry['geometry']
+
+      #Found some errors with location_accuracy when Unknown - convert to lowercase letters
+      if @entry['location_accuracy'].downcase == 'unknown'
+          @entry['location_accuracy'].downcase!
+      end
 
 
       #if we don't have a polygon, only use point
       @point = {
-        :type => "Point",
-        :coordinates => [@entry['longitude'],@entry["latitude"]]
+            :type => "Point",
+            :coordinates => [@entry['longitude'],@entry["latitude"]]
       }
+
 
        @geometry_collection = @point
 
 
-      #if we do have a polygon as well
+       #if we do have a polygon as well
        if @entry['geometry']
 
            @geo = @entry['geometry']['coordinates']
 
-           #compare the first and last entry of coord
-           #if they are not alike, add first coord to the last
+          #if they are not alike, add first coord to the last
            #according to RFC 7946
            unless @geo[0] &  @geo[@geo.length-1] == @geo[0]
              @entry['geometry']['coordinates'].push(@geo[0])
            end
 
-           shift_arr = []
-
            #Apply right-hand rule, go counterclockwise
-           if (@entry['geometry']['coordinates'][0][0] < @entry['geometry']['coordinates'][1][0])
-               for i in ((@entry['geometry']['coordinates'].size)-1).downto(0)
-                  shift_arr << @entry['geometry']['coordinates'][i]
+           @shift_arr = []
+           if rightHandRule(@geo) > 0
+               for i in (@entry['geometry']['coordinates'].size-1).downto(0)
+                  @shift_arr << @entry['geometry']['coordinates'][i]
                end
-           end
+               @entry['geometry']['coordinates']=@shift_arr
+            end
+
 
            @geometry = {
               :type => "Polygon",
-              :coordinates => [shift_arr]
+              :coordinates => [@entry['geometry']['coordinates']]
            }
+
            @geometries = [ @point, @geometry ]
 
            @geometry_collection = {
@@ -93,13 +116,13 @@ module Couch
               :geometries => @geometries
            }
 
+
        end
 
        #delete lat,lng
        @entry.tap { |k| k.delete("latitude") }
        @entry.tap { |k| k.delete("longitude") }
        @entry.tap { |k| k.delete("geometry") }
-       puts @geometry_collection
        @entry[:geometry] = @geometry_collection
 
 
@@ -117,9 +140,10 @@ module Couch
        req.body = doc
        req.basic_auth(user, password)
        res2 = http.request(req)
-       puts (res2.header).inspect
+       #puts (res2.header).inspect
        #puts (res2.body).inspect
 
+    end
     end
 
 
