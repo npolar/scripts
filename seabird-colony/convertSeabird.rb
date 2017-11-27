@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # Convert from colony Access database to the new couchdb database
+# Check FixGeoJSONSeabird when using for the next update...
 #
 # Author: srldl
 #
@@ -26,6 +27,19 @@ module Couch
     password = Couch::Config::PASSWORD3
     user = Couch::Config::USER3
 
+     #Enforce right-hand rule: Sum over edges. (x2 − x1)(y2 + y1).
+    #If the result is positive the curve is clockwise,
+    #if it's negative the curve is counter-clockwise
+    def self.rightHandRule(arr)
+      size = arr.size
+      sum = sum2 = 0
+      for i in 0..(size-2)
+          sum2 = (arr[i+1][0]-arr[i][0])*(arr[i+1][1] + arr[i][1])
+          sum = sum + sum2
+      end
+      return sum
+    end
+
     #Change the incoming string into GeoJSON object
     def self.createGeoJSON(inputStr, point_lat, point_lng)
         puts point_lat, point_lng
@@ -49,6 +63,16 @@ module Couch
         unless latlngdec_arr[0] &  latlngdec_arr[latlngdec_arr.length-1] == latlngdec_arr[0]
           latlngdec_arr.push(latlngdec_arr[0])
         end
+
+        #Apply right-hand rule, go counterclockwise
+        @shift_arr = []
+        if rightHandRule(latlngdec_arr) > 0
+            for i in (latlngdec_arr.size-1).downto(0)
+                @shift_arr << latlngdec_arr[i]
+            end
+            @entry['geometry']['coordinates']= @shift_arr
+        end
+
 
         return {
                 :type => "GeometryCollection",
@@ -331,6 +355,11 @@ module Couch
                 :island_size => @island_obj ? @island_obj[:size] : nil,
                 :island_archipelago => @island_obj ? @island_obj[:archipelago] : nil
         }
+
+    #Some entries have capital U in unknown, fix this
+    if @colony_obj['location_accuracy'].downcase == 'unknown'
+          @colony_obj['location_accuracy'].downcase!
+    end
 
 
     #remove nil values

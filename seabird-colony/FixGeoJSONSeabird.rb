@@ -22,11 +22,11 @@ module Couch
   class FixGeoJSONSeabird
 
     #Set server
-    host = Couch::Config::HOST3
-    port = Couch::Config::PORT3
-    password = Couch::Config::PASSWORD3
-    user = Couch::Config::USER3
-    auth = Couch::Config::AUTH3
+    host = Couch::Config::HOST4
+    port = Couch::Config::PORT4
+    password = Couch::Config::PASSWORD4
+    user = Couch::Config::USER4
+    auth = Couch::Config::AUTH4
     database = "seabird-colony"
 
 
@@ -134,14 +134,16 @@ module Couch
        puts doc
 
        #Post to server
-       @uri = URI.parse('http://api-test.data.npolar.no/seabird-colony')
+       #@uri = URI.parse('http://api-test.data.npolar.no/seabird-colony')
+       @uri = URI.parse('http://api.npolar.no/seabird-colony')
        http = Net::HTTP.new(@uri.host, @uri.port)
        req = Net::HTTP::Post.new(@uri.path,{'Authorization' => auth, 'Content-Type' => 'application/json' })
        req.body = doc
        req.basic_auth(user, password)
        res2 = http.request(req)
-       #puts (res2.header).inspect
-       #puts (res2.body).inspect
+       puts (res2.header).inspect
+      # puts (res2.body).inspect
+
 
     end
     end
