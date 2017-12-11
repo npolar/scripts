@@ -72,7 +72,7 @@ echo "Installing dmd..."
 cd ../dmd
 mkdir -p $DPATH/bin
 cp src/dmd ../../bin/
-echo -e "[Environment]\nDFLAGS=-I$DPATH/include/d2/ -L-L$DPATH/lib$DARCH/" > ../../bin/dmd.conf
+echo -e "[Environment]\nDFLAGS=-I$DPATH/include/d2/ -L-L$DPATH/lib$DARCH/ -fPIC" > ../../bin/dmd.conf
 
 echo "Installing druntime..."
 cd ../druntime
