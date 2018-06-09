@@ -40,16 +40,43 @@ var uuid;
     }
   }
 
+  /*translate javascript variable to database variable */
+  /*i.e. remove Z and change underscore to hyphen */
+  function translateAnalyte(k) {
+    if (k.includes("z") && k != 'undefined' ) {
+         return k.replace("z"," ")
+    };
+    if (k.includes("_")) {
+      var str =  k.replace("_", "-");
+      if (k.includes("Z")) {
+        return str.replace("Z","")
+      } else {
+        return str;
+      }
+    } else {
+      return k;
+    }
+  }
+
+ //Read all files in done directory
+ var files = fs.readdirSync('./done/');
+
+ for (var p in files) {
+
   //Filename - syntax with spaces: 'OC\ kylling\ blod\ 99.xls';
-  var filename = 'Isbjorn\ blod\ 90-92_MOSJ_data_HR_sjekket050618.xlsx';
+  var filename = files[p];
+  console.log(filename);
   var workbook = XLSX.readFile("done/"+filename);
   var sheet = workbook.SheetNames[0];
   var worksheet = workbook.Sheets[sheet];
 
 
+//Loop through all rows with valueable data
+for (var i=0;i<500;i++){
 
-for (var i=2;i<18;i++){
+  if ((worksheet["A"+i.toString()]) && (worksheet["A"+i.toString()].v !== 'project')){
 
+     console.log("object" + worksheet["A"+i.toString()].v);
    var people = {
      first_name: worksheet["W"+i.toString()].v,
      last_name:worksheet["X"+i.toString()].v,
@@ -78,7 +105,7 @@ var compound = {
    aldrin:checkExistence(worksheet["AU"+i.toString()]),
    dieldrin:checkExistence(worksheet["AV"+i.toString()]),
    endrin:checkExistence(worksheet["AW"+i.toString()]),
-   heptachlor_epoxide:checkExistence(worksheet["AX"+i.toString()]),
+   heptachlorzepoxide:checkExistence(worksheet["AX"+i.toString()]),
    CHB_26:checkExistence(worksheet["AY"+i.toString()]),
    CHB_40:checkExistence(worksheet["AZ"+i.toString()]),
    CHB_41:checkExistence(worksheet["BA"+i.toString()]),
@@ -202,7 +229,7 @@ var compound = {
    aldrin:"organochlorine pesticides (OCPs)",
    dieldrin:"organochlorine pesticides (OCPs)",
    endrin:"organochlorine pesticides (OCPs)",
-   heptachlor_epoxide:"organochlorine pesticides (OCPs)",
+   heptachlorzepoxide:"organochlorine pesticides (OCPs)",
    CHB_26:"organochlorine pesticides (OCPs)",
    CHB_40:"organochlorine pesticides (OCPs)",
    CHB_41:"organochlorine pesticides (OCPs)",
@@ -305,19 +332,18 @@ var compound = {
    N_EtFOSE:"poly- and perfluoroalkyl subtances (PFAS)"
  }
 
-
-
    var compound_arr = [];
 
    for (var k in compound) {
+
      var compound_entry = {
          analyte_category: analyte_category[k],
-         analyte:k,
-         wet_weight:compound[k],
+         analyte: translateAnalyte(k),
+         wet_weight:parseFloat(compound[k]),
          corrected_blank_contamination: checkExistence(worksheet["Z"+i.toString()]),
-         percent_recovery: checkExistence(worksheet["AA"+i.toString()]),
+         percent_recovery: parseFloat(checkExistence(worksheet["AA"+i.toString()])),
          unit: checkExistence(worksheet["AB"+i.toString()]),
-         detection_limit:checkExistence(worksheet["AC"+i.toString()])
+         detection_limit:parseFloat(checkExistence(worksheet["AC"+i.toString()]))
      };
 
       //Push to array if compound has a value i.e. is not an empty string
@@ -327,34 +353,38 @@ var compound = {
 
   };
 
+ var excel_obj = {
+  excel_uri:checkExistence(worksheet["R"+i.toString()]),
+  excel_filename:checkExistence(worksheet["S"+i.toString()]),
+  excel_type: checkExistence(worksheet["T"+i.toString()]),
+  excel_length: parseInt(checkExistence(worksheet["U"+i.toString()]))
+};
+
    var entry = {
      schema:  "http://api.npolar.no/schema/ecotox",
      lang:"en",
      project: checkExistence(worksheet["A"+i.toString()]),
      laboratory: checkExistence(worksheet["B"+i.toString()]),
      species: checkExistence(worksheet["C"+i.toString()]),
-     age: checkExistence(worksheet["D"+i.toString()]),
-     sex: checkExistence(worksheet["E"+i.toString()]),
+     age: (checkExistence(worksheet["D"+i.toString()])).toString(),
+     sex: (checkExistence(worksheet["E"+i.toString()])).toUpperCase(),
      age_group: checkExistence(worksheet["F"+i.toString()]),
      matrix: checkExistence(worksheet["G"+i.toString()]),
-     sample_id: checkExistence(worksheet["H"+i.toString()]),
-     NPI_sample_id: checkExistence(worksheet["I"+i.toString()]),
+     sample_id: (checkExistence(worksheet["H"+i.toString()])).toString(),
+     NPI_sample_id: (checkExistence(worksheet["I"+i.toString()])).toString(),
      lab_id: checkExistence(worksheet["J"+i.toString()]),
      fat_percentage: parseFloat(checkExistence(worksheet["K"+i.toString()])),
-     date_sample_collected:checkExistence(worksheet["L"+i.toString()]),
-     date_report:checkExistence(worksheet["M"+i.toString()]),
+     date_sample_collected:(checkExistence(worksheet["L"+i.toString()])).toString(),
+     date_report:(checkExistence(worksheet["M"+i.toString()])).toString(),
      latitude: parseFloat(checkExistence(worksheet["N"+i.toString()])),
      longitude:parseFloat(checkExistence(worksheet["O"+i.toString()])),
      placename:checkExistence(worksheet["P"+i.toString()]),
      ownership:checkExistence(worksheet["Q"+i.toString()]),
-     excel_uri:checkExistence(worksheet["R"+i.toString()]),
-     excel_filename:checkExistence(worksheet["S"+i.toString()]),
-     excel_type: checkExistence(worksheet["T"+i.toString()]),
-     excel_length: checkExistence(worksheet["U"+i.toString()]),
-     comment: checkExistence(worksheet["V"+i.toString()]),
+     excel: [excel_obj],
+     comment: parseInt(checkExistence(worksheet["V"+i.toString()])),
      collection:"ecotox",
      compound: compound_arr,
-     people: people,
+     people: [people],
      created: new Date().toISOString(),
      updated: new Date().toISOString(),
      created_by:"siri.uldal@npolar.no",
@@ -364,7 +394,7 @@ var compound = {
    };
 
 
-   console.log(entry);
+  // console.log(entry);
 
    //Decided to go for synchronous because if if fails, the script should terminate since I have no uuid
    var xhr = new XMLHttpRequest();
@@ -374,11 +404,22 @@ var compound = {
    if (xhr.status === 200) {
       var ret = JSON.parse(xhr.responseText);
       uuid = ret['uuids'][0];
-      console.log("uuid",uuid);
+    //  console.log("uuid",uuid);
+
+
+    var filename2 = filename.substr(0,(filename.length-5));
+    fs.writeFile("readtodb/"+ uuid + ".txt", JSON.stringify(entry), function(err) {
+         console.log("File created");
+        if(err) {
+            return console.log(err);
+        }
+
+
+    });
 
 
    //Push to database
-    var url = 'http://db-test.data.npolar.no:5984/ecotox/'+uuid;
+/*    var url = 'http://db-test.data.npolar.no:5984/ecotox/'+uuid;
     request(
        {
            method: 'PUT',
@@ -402,7 +443,10 @@ var compound = {
           console.log(error,response, body);
           // Do more stuff with 'body' here
        }
-    );
+    ); */
   }; //end uuid
 
- } //end for loop
+};
+} //end for loop row
+
+} //end of loop files
