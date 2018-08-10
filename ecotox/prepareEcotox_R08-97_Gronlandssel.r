@@ -12,13 +12,14 @@ createInput <- function(file,row,det_start,rec_start,col_start,col_end){
    if (!is.null(det_start)){
      det_lim = c(file[[det_start]][row])
    } else {
-     det_lim = ""
+     cat("got here")
+     det_lim = "-"
    }
 
    if (!is.null(rec_start)){
      prc_rec = c(file[[rec_start]][row])
    } else {
-     prc_rec = ""
+     prc_rec = "-"
    }
    
   return(paste0(s,"*", det_lim,"*",prc_rec))
@@ -28,6 +29,7 @@ createInput <- function(file,row,det_start,rec_start,col_start,col_end){
 createExcel <- function(){
 
   #Using XLConnect and readxl to interact with Excel
+  #Readxl reads old and excel files (XLS and XLSX), while XLConnect writes to file
   library(XLConnect)
   library(readxl)
 
@@ -36,20 +38,19 @@ createExcel <- function(){
   excelsheet <- "RAPPMAL"
   excelfilechop <- read.table(text = excelfile, sep = ".", as.is = TRUE)
   outExcelfile <- paste0(excelsheet,"_",excelfilechop$V1,".xlsx")
-  cat(outExcelfile)
-  quit
 
+  #Set input parameters
   project <- ""
-  species <- "phoca groenlandica"
   laboratory <- "NMBU"
+  species <- "phoca groenlandica"
   matrix <- "blubber"
-  placename <- "Svalbard"
   date_sample_collected <- "før 07.1995"
   date_report <- "03.97"
+  latitude <- ""
+  longitude <- ""
+  placename <- "Svalbard"
   unit <-"ng/g"
-  first_name <- "Heli"
-  last_name <- "Routti"
-  organisation <- "NPI"
+  ownership <- "NPI"
   excel_uri <- "dbbaa373-69e6-c700-9614-cef0f522635a"
   excel_filename <- "R08-97_Gronlandssel.XLS"
   excel_type <-"application/vnd.ms-excel"
@@ -57,8 +58,12 @@ createExcel <- function(){
   comment <- paste("Kontrollprøven oppnådde verdien: 4949.",
        "Akseptabel verdi er fra 4503 til 7099. Oppdragsgiver:Lars Kleivane,",
        "Veterinærinstituttet.Torbjørn Severinsen, Norsk Polarinstitutt.")
-  col_start <- 4
-  col_end   <- 13
+  first_name <- "Heli"
+  last_name <- "Routti"
+  organisation <- "NPI"
+
+  col_start <- 4  #Start to read ids from col..
+  col_end   <- 13 #to col
   det_start <- 2  #Col for detection limit
   rec_start <- 3  #Col for precent recovery 
   numb <- 10      #Number of empty rows needed
@@ -67,7 +72,7 @@ createExcel <- function(){
   file <- read_excel(excelfile, sheet = excelsheet)
 
  
-  project =  		rep('',each=numb,stringsAsFactors = FALSE)  #rep(c(project),each=numb,stringsAsFactors = FALSE) 
+  project =  		rep(c(project),each=numb,stringsAsFactors = FALSE) 
   laboratory = 		rep(c(laboratory),each=numb)
   species =  		rep(c(species),each=numb)
   age = 		rep('',each=numb,stringsAsFactors = FALSE)  
@@ -80,10 +85,10 @@ createExcel <- function(){
   fat_percentage= 	sapply(file, "[", c(31))[col_start:col_end]    
   date_sample_collected= rep(c(date_sample_collected),each=numb) 
   date_report= 		rep(c(date_report),each=numb) 
-  latitude= 		rep('',each=numb,stringsAsFactors = FALSE) 
-  longitude= 		rep('',each=numb,stringsAsFactors = FALSE) 
+  latitude= 		rep(c(latitude),each=numb)  #rep('',each=numb,stringsAsFactors = FALSE) 
+  longitude= 		rep(c(longitude),each=numb)  #rep('',each=numb,stringsAsFactors = FALSE) 
   placename= 		rep(c(placename),each=numb)
-  ownership= 		rep('',each=numb,stringsAsFactors = FALSE) 
+  ownership= 		rep(c(ownership),each=numb)  #rep('',each=numb,stringsAsFactors = FALSE) 
   excel_uri= 		rep(c(excel_uri),each=numb)
   excel_filename= 	rep(c(excel_filename),each=numb)
   excel_type= 		rep(c(excel_type),each=numb)
@@ -773,7 +778,7 @@ createExcel <- function(){
   	HxCBz,PnCBz,TCPM,BB101,length,tuskvol,CHB_40_41,lipid_weight,
   	tusk_length,tusk_girth,op_DDT_pp_DDD,PCB_74_76)
 
-	
+#Store in excel file	
 exc <- loadWorkbook(outExcelfile, create = TRUE)
 createSheet(exc,'Input')
 writeWorksheet(exc, df, sheet = "Input", startRow = 1, startCol = 1)
