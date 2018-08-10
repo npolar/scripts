@@ -8,18 +8,16 @@ createInput <- function(file,row,det_start,rec_start,col_start,col_end){
    s = substr(x = analyte, start = 1, stop = 20)
 
    #Extract detection limit and percent recovery from excel sheet
-   #if det_lim or prc_rec is NULL
-   if (!is.null(det_start)){
-     det_lim = c(file[[det_start]][row])
-   } else {
-     cat("got here")
-     det_lim = "-"
+   det_lim = c(file[[det_start]][row])
+   prc_rec = c(file[[rec_start]][row])
+
+   #if det_lim or prc_rec is NA, remove it to correspond with js script
+   if (is.na(det_lim)){
+     det_lim = ""
    }
 
-   if (!is.null(rec_start)){
-     prc_rec = c(file[[rec_start]][row])
-   } else {
-     prc_rec = "-"
+   if (is.na(prc_rec)){
+     prc_rec = ""
    }
    
   return(paste0(s,"*", det_lim,"*",prc_rec))
@@ -85,10 +83,10 @@ createExcel <- function(){
   fat_percentage= 	sapply(file, "[", c(31))[col_start:col_end]    
   date_sample_collected= rep(c(date_sample_collected),each=numb) 
   date_report= 		rep(c(date_report),each=numb) 
-  latitude= 		rep(c(latitude),each=numb)  #rep('',each=numb,stringsAsFactors = FALSE) 
-  longitude= 		rep(c(longitude),each=numb)  #rep('',each=numb,stringsAsFactors = FALSE) 
+  latitude= 		rep(c(latitude),each=numb)  
+  longitude= 		rep(c(longitude),each=numb) 
   placename= 		rep(c(placename),each=numb)
-  ownership= 		rep(c(ownership),each=numb)  #rep('',each=numb,stringsAsFactors = FALSE) 
+  ownership= 		rep(c(ownership),each=numb)  
   excel_uri= 		rep(c(excel_uri),each=numb)
   excel_filename= 	rep(c(excel_filename),each=numb)
   excel_type= 		rep(c(excel_type),each=numb)
@@ -452,7 +450,6 @@ createExcel <- function(){
   Z4_MeSO2_CB110= 	rep('',each=numb,stringsAsFactors = FALSE)
   Z3_MeSO2_CB149= 	rep('',each=numb,stringsAsFactors = FALSE)
   Z4_MeSO2_CB149= 	rep('',each=numb,stringsAsFactors = FALSE)
-  Z4_MeSO2_CB110= 	rep('',each=numb,stringsAsFactors = FALSE)
   Z3_MeSO2_CB132= 	rep('',each=numb,stringsAsFactors = FALSE)
   Z4_MeSO2_CB132= 	rep('',each=numb,stringsAsFactors = FALSE)
   Z3_MeSO2_CB141= 	rep('',each=numb,stringsAsFactors = FALSE)
@@ -734,7 +731,7 @@ createExcel <- function(){
   	Z3_MeSO2_CB52,Z4_MeSO2_CB52,Z4_MeSO2_CB64,Z3_MeSO2_CB70,
   	Z4_MeSO2_CB70,Z3_MeSO2_CB87,Z4_MeSO2_CB87,Z3_MeSO2_CB91,
   	Z4_MeSO2_CB91,Z3_MeSO2_CB101,Z4_MeSO2_CB101,Z3_MeSO2_CB110,
-  	Z4_MeSO2_CB110,Z3_MeSO2_CB149,Z4_MeSO2_CB149,Z4_MeSO2_CB110,
+  	Z4_MeSO2_CB110,Z3_MeSO2_CB149,Z4_MeSO2_CB149,
   	Z3_MeSO2_CB132,Z4_MeSO2_CB132,Z3_MeSO2_CB141,Z4_MeSO2_CB141,
   	Z3_MeSO2_CB174,Z4_MeSO2_CB174,Z19_MeSO2_CB,BDE_17,BDE_25,
   	BDE_49,BDE_54,BDE_66,BDE_71,BDE_71_49,BDE_75,BDE_85,
